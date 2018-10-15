@@ -1,0 +1,3 @@
+cat model.json | jq -r ".weightsManifest[].paths[0]" | sed 's/^/https:\/\/storage.googleapis.com\/tfjs-models\/tfjs\/mobilenet_v1_1.0_224\//' | tr -d '\r' | parallel curl -O
+
+Para descargar weights de mobilenet desde cygwin o mac
