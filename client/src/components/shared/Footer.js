@@ -6,10 +6,17 @@ import Grid from '@material-ui/core/Grid';
 
 const styles = theme => ({
   root: {
-    flexGrow: 1,
+		flexGrow: 1,
+		position:"fixed",
+		left: 0,
+		height: 48,
+		top: "calc(100% - 35px)",
+    width: "100%",
+		textAlign: "center",
+		verticalAlign: "middle"
   },
   paper: {
-    padding: theme.spacing.unit * 2,
+    padding: "0 " + theme.spacing.unit * 2 + "px 0 " + theme.spacing.unit * 2 + "px",
     textAlign: 'left',
     color: theme.palette.text.secondary,
   },

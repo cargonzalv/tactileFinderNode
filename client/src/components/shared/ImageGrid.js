@@ -18,18 +18,24 @@ const styles = theme => ({
     flexWrap: 'nowrap',
     // Promote the list into his own layer on Chrome. This cost memory but helps keeping high FPS.
     transform: 'translateZ(0)',
-    height:230
+    height:230,
+    width: 2000,
 
   },
   title: {
     color: theme.palette.primary,
   },
   images: {
-    width: 200,
+    width:"200px",
     height: 180,
   },titleBar: {
     background:
       'linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.4) 40%, rgba(0,0,0,0) 80%)',
+  },
+  imageContainer:{
+    minWidth: 250,
+    width: "50vw",
+    maxWidth: 350
   }
   
 });
@@ -42,7 +48,7 @@ function ImageGrid(props) {
     <div className={classes.root}>
       <GridList className={classes.gridList} cols={3} style={{ margin: 15 }}>
         {tileData.map(tile => (
-          <GridListTile key={tile.img}>
+          <GridListTile className={classes.imageContainer} key={tile.img}>
             <img className={classes.images} src={tile.img} alt={tile.title} />
            
           </GridListTile>

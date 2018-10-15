@@ -22,6 +22,14 @@ const styles = theme => ({
     marginLeft: theme.spacing.unit,
     marginRight: theme.spacing.unit,
   },
+  title: {
+    fontSize: "6rem",
+    fontWeight: 300,
+    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+    lineHeight: "1.14286em",
+    marginLeft: "-.04em",
+    letterSpacing: "-.04em"
+  }
 });
 
 
@@ -58,8 +66,13 @@ searchImage = (name) => event => {
         <Grid item xs={10}>
           <Paper className={classes.paper}>
           <Grid item xs={12}>
-            <Typography variant="display4" color="inherit" noWrap>
+            <Typography className={classes.title} color="inherit" noWrap>
             T-Graph
+            </Typography>
+          </Grid>
+          <Grid item xs={12}>
+            <Typography id="subheading" variant="title" align="center" color="textSecondary" paragraph>
+              Making more tactile graphs available to blind people through magic*
             </Typography>
           </Grid>
 
@@ -99,21 +112,11 @@ searchImage = (name) => event => {
       		</Grid>
      	  </Grid>
           <Grid item xs={12}>
-            <Typography id="subheading" variant="title" align="center" color="textSecondary" paragraph>
-              Making more tactile graphs available to blind people through magic*
-            </Typography>
-          </Grid>
-          <Grid item xs={12}>
           	<ImageGrid/>
-
-
-
 
             <Typography id="subheading" variant="title" align="center" color="textSecondary" paragraph>
               Examples of good images to upload
             </Typography>
-
-
 
           </Grid>
           </Paper>
