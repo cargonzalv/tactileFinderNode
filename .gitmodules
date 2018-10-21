@@ -1,0 +1,3 @@
+[submodule "tactileFinderClient"]
+	path = tactileFinderClient
+	url = https://github.com/cegonzalv/tactileFinderClient.git
