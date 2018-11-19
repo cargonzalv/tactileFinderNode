@@ -14,13 +14,13 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as tf from '@tensorflow/tfjs';
+const tf = require('@tensorflow/tfjs')
 
 /**
  * A dataset for webcam controls which allows the user to add example Tensors
  * for particular labels. This object will concat them into two large xs and ys.
  */
-export class ControllerDataset {
+module.exports =  class ControllerDataset {
   constructor(numClasses) {
     this.numClasses = numClasses;
   }

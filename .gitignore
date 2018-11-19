@@ -59,3 +59,8 @@ typings/
 
 # next.js build output
 .next
+
+# project specific
+/backend/tf_files/*
+/backend/tf_files/*/*
+!/backend/tf_files/tactile_photos/*

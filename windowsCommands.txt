@@ -1,0 +1,69 @@
+run one cmd with 
+tensorboard --logdir tf_files/training_summaries --host=127.0.0.1
+for logging.
+
+other one with this:
+
+set IMAGE_SIZE=224
+set ARCHITECTURE="mobilenet_0.50_%IMAGE_SIZE%"
+
+python -m scripts.retrain --bottleneck_dir=tf_files/bottlenecks --model_dir=tf_files/models/ --how_many_training_steps 4000 --learning_rate 0.005 --summaries_dir=tf_files/training_summaries/"%ARCHITECTURE%" --output_graph=tf_files/retrained_graph.pb --output_labels=tf_files/retrained_labels.txt --architecture=%ARCHITECTURE% --image_dir=tf_files/tactile_photos
+
+summaries_dir will send the training reports to the tensorboard.
+
+decrease --learning_rate for more accuracy
+increase --how_many_training_steps for more accuracy
+
+Distortions: 
+--random_crop
+--random_scale
+--random_brightness
+(start with values from 5 to 10)
+--flip_left_right (flips images horizontally at random)
+
+--print_misclassified_test_images
+(tests misclassified images at the end)
+
+see reporting in localhost:6006
+
+Classifying an image
+python -m scripts.label_image --graph=tf_files/retrained_graph.pb --image=../../tactileFinder/tactile_finder_python/tactileFinderClient/src/images/doodle.jpg
+
+python -m scripts.label_image --graph=tf_files/retrained_graph.pb --image=tf_files/tactile_photos/Positive/Positive00001.jpg
+python -m scripts.label_image --graph=tf_files/retrained_graph.pb --image=tf_files/tactile_photos/Negative/Negative00001.jpg
+python -m scripts.label_image --graph=tf_files/retrained_graph.pb --image=tf_files/tests/Positive00001.jpg
+
+change --image param for your image
+	
+
+Docker
+
+show i/o
+saved_model_cli show --dir tf_files/saved_models/mobilenet_0.50_224 --all
+
+//convert
+tensorflowjs_converter --input_format=tf_saved_model --output_node_names=final_result:0 --saved_model_tags=serve tf_files/saved_models/mobilenet_0.50_224 tf_files/web_model/mobilenet_0.50_224
+
+docker build ./ --rm -t  cegonzalv/tactilefindertensorflow:latest
+docker push cegonzalv/tactilefindertensorflow:latest
+
+//fix bash files
+sed -e "s/^M//" filename > newfilename
+
+//small, for testing
+train.sh mobilenet_1.0_224 50
+//big 
+train.sh inception_v3 4000
+
+//predict
+guess.sh ../tactileFinderClient/src/images/doodle.jpg
+
+docker run -i -t cegonzalv/tactilefindertensorflow:latest
+
+//git push on ubuntu machine
+git config --local --unset credential.helper
+
+
+if.garcia
+RealMadrid13
+	 
