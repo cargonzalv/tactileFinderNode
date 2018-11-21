@@ -66,4 +66,4 @@ git config --local --unset credential.helper
 https://drive.google.com/uc?export=download&id=1vfYpb6dZ6weIF9EknVAaFD_Fmvps-1lm
 
 sudo apt-get install zip unzip
-sudo wget -qO- -O tmp.zip "https://drive.google.com/uc?export=download&id=1vfYpb6dZ6weIF9EknVAaFD_Fmvps-1lm" && sudo unzip tmp.zip && sudo rm tmp.zip
+sudo wget -qO- -O ./tf_files/tmp.zip "https://drive.google.com/uc?export=download&id=1vfYpb6dZ6weIF9EknVAaFD_Fmvps-1lm" && cd tf_files && sudo unzip tmp.zip && sudo rm tmp.zip && cd ..
