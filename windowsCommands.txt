@@ -57,7 +57,7 @@ train.sh inception_v3 4000
 
 //predict
 guess.sh ../tactileFinderClient/src/images/doodle.jpg
-
+guessDir.sh ../tactileFinderClient/src/images output
 docker run -i -t cegonzalv/tactilefindertensorflow:latest
 
 //git push on ubuntu machine

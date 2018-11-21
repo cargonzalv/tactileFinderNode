@@ -9,9 +9,15 @@
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log"
   },
+  "engines": { "node": "8" },
   "dependencies": {
     "firebase-admin": "~5.13.0",
-    "firebase-functions": "^2.0.0"
+    "firebase-functions": "^2.0.0",
+    "@tensorflow/tfjs" : "0.13.5",
+    "canvas": "2.1.0",
+    "@tensorflow-models/mobilenet" : "0.2.2",
+    "@tensorflow/tfjs-node" : "0.1.21",
+    "node-fetch" : "2.3.0"
   },
   "devDependencies": {
     "eslint": "^4.12.0",

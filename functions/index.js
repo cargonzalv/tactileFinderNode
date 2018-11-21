@@ -2,7 +2,8 @@ const functions = require('firebase-functions');
 const tf = require('@tensorflow/tfjs')
 const mobilenet = require('@tensorflow-models/mobilenet');
 const {createCanvas, Image} = require('canvas');
-
+const fs = require('fs')
+const os = require("os")
 require('@tensorflow/tfjs-node')
 global.fetch = require('node-fetch')
 
@@ -21,13 +22,27 @@ const IMAGE_SIZE = 224;
 //  response.send("Hello from Firebase!");
 // });
 
+// const upload = async (binary)=>{
+//   let data = binary.replace(/^data:image\/\w+;base64,/, "");
+//   var buf = new Buffer(data, 'base64');
+//   fs.writeFile("/tmp/test.jpg", buf, function(err) {
+//     if(err)
+//       console.log(err);
+//     else
+//       console.log("The file was saved!");
+//   }); 
+
+// }
+
 const imageToCanvas = (src) =>{
+  console.log(os.tmpdir())
     return new Promise((resolve) => {
       const canvas = createCanvas(224, 224);
       const ctx = canvas.getContext('2d');
       let img = new Image()
       img.src = src
-      img.onload = e => {
+      console.log(img)
+      img.onload = async e => {
         ctx.drawImage(img, 0, 0, 224, 224)
         return resolve(canvas);
       }
@@ -45,7 +60,7 @@ const imageToCanvas = (src) =>{
 
 exports.classifyMN = functions.https.onRequest(async (request, response)=>{
 
-    let input = await imageToCanvas("https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Grosser_Panda.JPG/1200px-Grosser_Panda.JPG");
+    let input = await imageToCanvas("https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png");
     console.log(input)
     await loadModel()
     const prediction = await model.classify(input)   
@@ -63,7 +78,7 @@ const loadFrozenModel = async () =>{
         let lines = text.split("\n");
         this.classes = [];
         lines.map((l)=>{
-          this.classes.push(l)
+          return this.classes.push(l)
         })
       // Warmup the model.
       const result = tf.tidy(
@@ -104,10 +119,11 @@ const predict = (input) => {
         }
         return predictionList;
     }
-
+    
 exports.classify = functions.https.onRequest(async (request, response)=>{
 
-    let input = await imageToCanvas("https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Grosser_Panda.JPG/1200px-Grosser_Panda.JPG");
+
+    let input = await imageToCanvas("https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png");
     console.log(input)
     await loadFrozenModel()
     const result = await predict(input) 
