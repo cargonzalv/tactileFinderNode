@@ -62,5 +62,5 @@ typings/
 
 # project specific
 /backend/tf_files/*
-/backend/tf_files/*/*
-!/backend/tf_files/tactile_photos/*
+!/backend/tf_files/tactile_photos
+/backend/tf_files/tactile_photos/*/*
