@@ -51,9 +51,9 @@ docker push cegonzalv/tactilefindertensorflow:latest
 sed -e "s/^M//" filename > newfilename
 
 //small, for testing
-train.sh mobilenet_1.0_224 50
+train.sh 50
 //big 
-train.sh inception_v3 4000
+train.sh 4000
 
 //predict
 guess.sh ../tactileFinderClient/src/images/doodle.jpg
@@ -63,7 +63,7 @@ docker run -i -t cegonzalv/tactilefindertensorflow:latest
 //git push on ubuntu machine
 git config --local --unset credential.helper
 
+https://drive.google.com/uc?export=download&id=1vfYpb6dZ6weIF9EknVAaFD_Fmvps-1lm
 
-if.garcia
-RealMadrid13
-	 
+sudo apt-get install zip unzip
+sudo wget -qO- -O tmp.zip "https://drive.google.com/uc?export=download&id=1vfYpb6dZ6weIF9EknVAaFD_Fmvps-1lm" && sudo unzip tmp.zip && sudo rm tmp.zip
