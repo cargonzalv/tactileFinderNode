@@ -1310,7 +1310,7 @@ if __name__ == '__main__':
   parser.add_argument(
       '--validation_batch_size',
       type=int,
-      default=-1,
+      default=100,
       help="""\
       How many images to use in an evaluation batch. This validation set is
       used much more often than the test set, and is an early indicator of how
@@ -1354,7 +1354,7 @@ if __name__ == '__main__':
   )
   parser.add_argument(
       '--flip_left_right',
-      default=True,
+      default=False,
       help="""\
       Whether to randomly flip half of the training images horizontally.\
       """,
@@ -1381,7 +1381,7 @@ if __name__ == '__main__':
   parser.add_argument(
       '--random_brightness',
       type=int,
-      default=10,
+      default=0,
       help="""\
       A percentage determining how much to randomly multiply the training image
       input pixels up or down by.\

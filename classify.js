@@ -35,9 +35,9 @@ const imageToInput = (image, numChannels) => {
   return input
 }
 
-const loadModel = async path => {
+const loadModel = async => {
   const mn = new mobilenet.MobileNet(1, 1);
-  mn.path = `file://${path}`
+  mn.path = `file://${mobilenet/model.json}`
   await mn.load()
   return mn
 }
@@ -46,7 +46,7 @@ const classify = async (model, path) => {
   const image = readImage(path)
   const input = imageToInput(image, NUMBER_OF_CHANNELS)
 
-  const  mn_model = await loadModel(model)
+  const  mn_model = await loadModel()
   const predictions = await mn_model.classify(input)
 
   console.log('classification results:', predictions)
