@@ -13,10 +13,10 @@
     ],
     "rewrites": [
       {
-        "source": "/classify", "function": "classify"
+        "source": "/api/classify", "function": "classify"
       },
       {
-        "source": "/classifyMN", "function": "classifyMN"
+        "source": "/api/classifyMN", "function": "classifyMN"
       },
       {
         "source": "**",
