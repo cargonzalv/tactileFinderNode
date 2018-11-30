@@ -47,7 +47,10 @@ exports.train = functions.firestore.document('Data/{docId}').onWrite(async (even
           numberOfDocs: snap.numberOfDocs + 1
         });
         return;
-      });
+      })
+      .catch((err)=>{
+        console.log(err)
+      })
     }
 
   } else if (event.data.previous && event.data.exists) {
@@ -61,7 +64,10 @@ exports.train = functions.firestore.document('Data/{docId}').onWrite(async (even
         numberOfDocs: snap.numberOfDocs - 1
       });
       return;
-    });
+    })
+    .catch((err)=>{
+      console.log(err)
+    })
   }
   const newValue = snap.after.data();
 
