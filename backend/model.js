@@ -4,7 +4,7 @@ const path = require("path");
 const fs = require("fs");
 const os = require('os');
 
-const firebase = require("./firebaseStorage");
+const firebase = require("../functions/firebaseStorage");
 var bucket = firebase.storage().bucket("tactiled-model");
 
 // Loads mobilenet and returns a model that returns the internal activation

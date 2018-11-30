@@ -66,3 +66,4 @@ typings/
 /backend/tactile_photos/*
 !/backend/tactile_photos/.gitkeep
 /backend/trained_models
+serviceAccount*.json
