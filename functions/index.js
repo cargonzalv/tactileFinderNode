@@ -35,33 +35,29 @@ const initTraining = async function(positives, negatives, ) {
 exports.train = functions.firestore.document('Data/{docId}').onWrite(async (event) => {
   // Get an object representing the document
   // e.g. {'name': 'Marie', 'age': 66}
-  if (!event.data.previous) {
+  if (!event.before.exists) {
+    console.log("objeto nuevo")
     // New document Created : add one to count
-    if (!db.doc("metadata").exists) {
-      db.doc("metadata").set({
+    let metadata = await db.doc("metadata").get()
+    if (!metadata.exists) {
+      console.log("Metadata no existeeee")
+      await db.doc("metadata").set({
         numberOfDocs: 1
       })
     } else {
-      db.doc("metadata").get().then(snap => {
-        db.doc("metadata").update({
-          numberOfDocs: snap.numberOfDocs + 1
-        });
-        return;
+      console.log("entro a crear")
+      await db.doc("metadata").update({
+        numberOfDocs: metadata.data().numberOfDocs + 1
       })
-      .catch((err)=>{
-        console.log(err)
-      })
+      console.log("nicee")
     }
 
-  } else if (event.data.previous && event.data.exists) {
-    // Updating existing document : Do nothing
-    return;
-
-  } else if (!event.data.exists) {
+  } else if (!event.after.exists) {
     // Deleting document : subtract one from count
+    console.log("deletinggg")
     db.doc("metadata").get().then(snap => {
       db.doc("metadata").update({
-        numberOfDocs: snap.numberOfDocs - 1
+        numberOfDocs: snap.data().numberOfDocs - 1
       });
       return;
     })
@@ -69,13 +65,13 @@ exports.train = functions.firestore.document('Data/{docId}').onWrite(async (even
       console.log(err)
     })
   }
-  const newValue = snap.after.data();
+  // const newValue = event.after.data();
 
-  // access a particular field as you would any JS property
-  const positives = newValue.positives;
-  const negatives = newValue.negatives;
+  // // access a particular field as you would any JS property
+  // const positives = newValue.positives;
+  // const negatives = newValue.negatives;
 
-  initTraining(positives, negatives)
+  // initTraining(positives, negatives)
 });
 
 // Listen for any change on document `marie` in collection `users`

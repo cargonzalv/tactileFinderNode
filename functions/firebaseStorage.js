@@ -8,4 +8,4 @@ var config = {
   storageBucket: "tactiled-model.appspot.com"
 };
 
-module.exports = admin.initializeApp(config);
+module.exports = admin.initializeApp(config, "cloudStorage");
