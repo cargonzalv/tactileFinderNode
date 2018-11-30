@@ -1,133 +1,155 @@
+global.fetch = require("node-fetch");
+
+const model = require("./utils/model");
+const data = require("./utils/data");
+const App = require("./utils/app");
+const path = require("path");
 const functions = require('firebase-functions');
-const tf = require('@tensorflow/tfjs')
-const mobilenet = require('@tensorflow-models/mobilenet');
-const {createCanvas, Image} = require('canvas');
-const fs = require('fs')
-const os = require("os")
-require('@tensorflow/tfjs-node')
-global.fetch = require('node-fetch')
 
-const trainedModel = "mobilenet_1.0_224";
+const firestore = require("./firebase").firestore();
+const db = firestore.collection("Data");
 
-const MODEL_URL = `https://raw.githubusercontent.com/cegonzalv/tactileFinderClient/master/src/tfmodel/${trainedModel}/tensorflowjs_model.pb`
-const WEIGHTS_MANIFEST_URL = `https://raw.githubusercontent.com/cegonzalv/tactileFinderClient/master/src/tfmodel/${trainedModel}/weights_manifest.json`
+let imageDir = "./tactile_photos";
+let projectName = path.basename(path.dirname(imageDir));
 
-let model = null;
-const PREPROCESS_DIVISOR = tf.scalar(255 / 2);
-const IMAGE_SIZE = 224;
-// // Create and Deploy Your First Cloud Functions
-// // https://firebase.google.com/docs/functions/write-firebase-functions
-//
-// exports.helloWorld = functions.https.onRequest((request, response) => {
-//  response.send("Hello from Firebase!");
-// });
+const initTraining = async function(positives, negatives, ) {
+  let app = new App(projectName);
 
-// const upload = async (binary)=>{
-//   let data = binary.replace(/^data:image\/\w+;base64,/, "");
-//   var buf = new Buffer(data, 'base64');
-//   fs.writeFile("/tmp/test.jpg", buf, function(err) {
-//     if(err)
-//       console.log(err);
-//     else
-//       console.log("The file was saved!");
-//   }); 
+  await data.loadLabelsAndImages(images, "Positive");
 
+  console.time("Loading Model");
+  await model.init();
+  console.timeEnd("Loading Model");
+
+  try {
+    await app.trainModel();
+
+    let newModel = await model.saveModel(projectName);
+    console.log(newModel)
+  } catch (error) {
+    console.error(error);
+  }
+  app.testModel();
+
+}
+exports.train = functions.firestore.document('Data/{docId}').onWrite(async (event) => {
+  // Get an object representing the document
+  // e.g. {'name': 'Marie', 'age': 66}
+  if (!event.data.previous) {
+    // New document Created : add one to count
+    if (!db.doc("metadata").exists) {
+      db.doc("metadata").set({
+        numberOfDocs: 1
+      })
+    } else {
+      db.doc("metadata").get().then(snap => {
+        db.doc("metadata").update({
+          numberOfDocs: snap.numberOfDocs + 1
+        });
+        return;
+      });
+    }
+
+  } else if (event.data.previous && event.data.exists) {
+    // Updating existing document : Do nothing
+    return;
+
+  } else if (!event.data.exists) {
+    // Deleting document : subtract one from count
+    db.doc("metadata").get().then(snap => {
+      db.doc("metadata").update({
+        numberOfDocs: snap.numberOfDocs - 1
+      });
+      return;
+    });
+  }
+  const newValue = snap.after.data();
+
+  // access a particular field as you would any JS property
+  const positives = newValue.positives;
+  const negatives = newValue.negatives;
+
+  initTraining(positives, negatives)
+});
+
+// Listen for any change on document `marie` in collection `users`
+exports.myFunctionName = functions.firestore
+  .document('users/marie').onWrite((snap, context) => {
+    // Get an object representing the document
+    // e.g. {'name': 'Marie', 'age': 66}
+    const newValue = snap.data();
+
+    // access a particular field as you would any JS property
+    const name = newValue.name;
+
+  });
+
+// const loadFrozenModel = async () => {
+//   model = await tf.loadFrozenModel(
+//     MODEL_URL,
+//     WEIGHTS_MANIFEST_URL);
+//   let data = await fetch(`https://raw.githubusercontent.com/cegonzalv/tactileFinderClient/master/src/tfmodel/${trainedModel}/retrained_labels.txt`, {
+//     mode: "cors",
+//   });
+//   let text = await data.text();
+//   let lines = text.split("\n");
+//   this.classes = [];
+//   lines.map((l) => {
+//     return this.classes.push(l)
+//   })
+//   // Warmup the model.
+//   const result = tf.tidy(
+//     () => model.predict(tf.zeros(
+//       [1, IMAGE_SIZE, IMAGE_SIZE, 3])));
+//   await result.data();
+//   result.dispose();
 // }
 
-const imageToCanvas = (src) =>{
-  console.log(os.tmpdir())
-    return new Promise((resolve) => {
-      const canvas = createCanvas(224, 224);
-      const ctx = canvas.getContext('2d');
-      let img = new Image()
-      img.src = src
-      console.log(img)
-      img.onload = async e => {
-        ctx.drawImage(img, 0, 0, 224, 224)
-        return resolve(canvas);
-      }
-    })
-    
-  }
-  
-  const loadModel = async () => {
-    const mn = new mobilenet.MobileNet(1, 1);
-    mn.path = `https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_1.0_224/model.json`
-    await mn.load()
-    model = mn;
-    
-  }
+// const predict = (input) => {
+//   return tf.tidy(() => {
+//     const pixels = tf.fromPixels(input)
+//     // Normalize the image from [0, 255] to [-1, 1].
+//     let normalized = pixels.toFloat().sub(PREPROCESS_DIVISOR).div(PREPROCESS_DIVISOR);
 
-exports.classifyMN = functions.https.onRequest(async (request, response)=>{
+//     // Resize the image to
+//     let resized = normalized;
+//     if (pixels.shape[0] !== IMAGE_SIZE || pixels.shape[1] !== IMAGE_SIZE) {
+//       const alignCorners = true;
+//       resized = tf.image.resizeBilinear(
+//         normalized, [IMAGE_SIZE, IMAGE_SIZE], alignCorners);
+//     }
 
-    let input = await imageToCanvas("https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png");
-    console.log(input)
-    await loadModel()
-    const prediction = await model.classify(input)   
-    response.send(prediction)
+//     const batched = resized.reshape([1, IMAGE_SIZE, IMAGE_SIZE, 3]);
+//     return model.predict(batched)
+//   })
 
-})
-const loadFrozenModel = async () =>{
-    model = await tf.loadFrozenModel(
-        MODEL_URL,
-        WEIGHTS_MANIFEST_URL);
-        let data = await fetch(`https://raw.githubusercontent.com/cegonzalv/tactileFinderClient/master/src/tfmodel/${trainedModel}/retrained_labels.txt`,{
-          mode:"cors",
-        });
-        let text = await data.text();
-        let lines = text.split("\n");
-        this.classes = [];
-        lines.map((l)=>{
-          return this.classes.push(l)
-        })
-      // Warmup the model.
-      const result = tf.tidy(
-                         () => model.predict(tf.zeros(
-                             [1, IMAGE_SIZE, IMAGE_SIZE, 3])));
-      await result.data();
-      result.dispose();
-  }
+// }
+// const getTopKClasses = async (logits) => {
+//   const values = logits.dataSync();
+//   console.log(values)
+//   let predictionList = [];
+//   for (let i = 0; i < values.length; i++) {
+//     predictionList.push({
+//       label: this.classes[i],
+//       value: values[i]
+//     });
+//   }
+//   return predictionList;
+// }
 
-const predict = (input) => {
-    return tf.tidy(() =>{
-      const pixels = tf.fromPixels(input)
-      // Normalize the image from [0, 255] to [-1, 1].
-      let normalized = pixels.toFloat().sub(PREPROCESS_DIVISOR).div(PREPROCESS_DIVISOR);
-      
-      // Resize the image to
-      let resized = normalized;
-      if (pixels.shape[0] !== IMAGE_SIZE || pixels.shape[1] !== IMAGE_SIZE) {
-        const alignCorners = true;
-        resized = tf.image.resizeBilinear(
-          normalized, [IMAGE_SIZE, IMAGE_SIZE], alignCorners);
-        }
-        
-        const batched = resized.reshape([1, IMAGE_SIZE, IMAGE_SIZE, 3]);
-        return model.predict(batched)
-      })
-      
-    }
-    const getTopKClasses = async (logits) => {
-        const values = logits.dataSync();
-        console.log(values)
-        let predictionList = [];
-        for (let i = 0; i < values.length; i++) {
-          predictionList.push({
-            label: this.classes[i],
-            value: values[i]
-          });
-        }
-        return predictionList;
-    }
-    
-exports.classify = functions.https.onRequest(async (request, response)=>{
+// exports.classify = functions.https.onRequest(async (request, response) => {
 
+//   let input = await imageToCanvas("https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png");
+//   console.log(input)
+//   await loadFrozenModel()
+//   const result = await predict(input)
+//   const prediction = await getTopKClasses(result);
+//   response.send(prediction)
 
-    let input = await imageToCanvas("https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png");
-    console.log(input)
-    await loadFrozenModel()
-    const result = await predict(input) 
-    const prediction = await getTopKClasses(result);
-    response.send(prediction)
+// })
 
+exports.test = functions.https.onRequest(async (request, response) => {
+  console.log("fiemfioewnfweiowmflekokfoekfoewkfwepfmpwm")
+  console.log(request)
+  response.send("OKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK")
 })

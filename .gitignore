@@ -63,3 +63,6 @@ typings/
 # project specific
 /backend/tf_files/*
 !/backend/tf_files/.gitkeep
+/backend/tactile_photos/*
+!/backend/tactile_photos/.gitkeep
+/backend/trained_models
