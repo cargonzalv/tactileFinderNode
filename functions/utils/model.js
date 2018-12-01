@@ -5,7 +5,7 @@ const fs = require("fs");
 const os = require('os');
 
 const firebase = require("../firebaseStorage");
-var bucket = firebase.storage().bucket("tactiled-model");
+var bucket = firebase.storage().bucket("tactiledmodel");
 
 // Loads mobilenet and returns a model that returns the internal activation
 // we'll use as input to our classifier model.

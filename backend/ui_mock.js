@@ -1,12 +1,12 @@
 //@ts-check
 const getDenseUnits = () => {
-    return 200;
+    return 500;
 };
 
 const getLearningRate = () => {
     // Do not increase above 0.0001.
     // Doing so has produced very poor training results.
-    return 0.00001;
+    return 0.001;
 };
 
 const getBatchSizeFraction = () => {
