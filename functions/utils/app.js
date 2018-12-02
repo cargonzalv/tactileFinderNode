@@ -13,7 +13,6 @@ class App {
   async testModel() {
     console.log("Testing Model");
     await model.loadModel(this.projectName);
-
     if (model.model) {
       console.time("Testing Predictions");
       console.log(model.model.summary());
@@ -64,6 +63,38 @@ class App {
       
     }
   }
+
+  async predictModel() {
+    console.log("Testing Model");
+    await model.loadModel(this.projectName);
+    if (model.model) {
+      console.time("Testing Predictions");
+      let results = [];
+      data.labelsAndImages.images.forEach(img_filename => {
+          tf.tidy(() => {
+            let embeddings = data.dataset ?
+              data.getEmbeddingsForImage(imageIndex++) :
+              data.fileToTensor(img_filename);
+            if(embeddings === null){
+              return;
+            }
+            let prediction = model.getPrediction(embeddings);
+            let probability = (Number(prediction.confidence) * 10).toFixed(1);
+            probability = prediction.label === "Positive" ? probability : 100 - probability;
+            results.push({
+              class: "Positive",
+              probability: probability
+            });
+        });
+      });
+      return results
+      
+    }
+    else{
+      return null;
+    }
+  }
+
 
   async trainModel() {
     await data.loadTrainingData(model.decapitatedMobilenet);

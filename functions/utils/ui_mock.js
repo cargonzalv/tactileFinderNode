@@ -6,7 +6,7 @@ const getDenseUnits = () => {
 const getLearningRate = () => {
     // Do not increase above 0.0001.
     // Doing so has produced very poor training results.
-    return 0.00001;
+    return 0.0001;
 };
 
 const getBatchSizeFraction = () => {
@@ -14,7 +14,7 @@ const getBatchSizeFraction = () => {
 };
 
 const getEpochs = () => {
-    return 50;
+    return 10;
 };
 
 const trainStatus = status => {

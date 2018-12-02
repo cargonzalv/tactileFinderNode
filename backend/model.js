@@ -66,7 +66,6 @@ class Model {
         })
       ]
     });
-
     // Creates the optimizers which drives training of the model.
     const optimizer = tf.train.adam(learningRate);
     // We use categoricalCrossentropy which is the loss function we use for
@@ -86,7 +85,7 @@ class Model {
   getPrediction(x) {
     // Assume we are getting the embeddings from the decapitatedMobilenet
     let embeddings = x;
-    // If the second dimension is 224, treat it as though it's an image tensor
+    //If the second dimension is 224, treat it as though it's an image tensor
     if (x.shape[1] === 224) {
       embeddings = this.decapitatedMobilenet.predict(x);
     }
@@ -120,10 +119,10 @@ class Model {
       console.log('Uploaded weights bin!');
       let modelJson = { ...rawData
       };
-      modelJson.weightsManifest = {
+      modelJson.weightsManifest = [{
         paths: ["weights.bin"],
         weights: rawData.weightSpecs
-      }
+      }]
       delete modelJson.weightSpecs;
       delete modelJson.weightData;
       await this.uploadFile("model.json", modelJson)

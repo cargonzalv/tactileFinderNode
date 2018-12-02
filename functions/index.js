@@ -5,9 +5,12 @@ const data = require("./utils/data");
 const App = require("./utils/app");
 const path = require("path");
 const functions = require('firebase-functions');
-
+const cors = require('cors')({
+  origin: true
+});
+const req = require("request");
 const firestore = require("./firebase").firestore();
-const db = firestore.collection("Data");
+const allRef = firestore.collection("All");
 
 let imageDir = "./tactile_photos";
 let projectName = path.basename(path.dirname(imageDir));
@@ -38,15 +41,15 @@ exports.train = functions.firestore.document('Data/{docId}').onWrite(async (even
   if (!event.before.exists) {
     console.log("objeto nuevo")
     // New document Created : add one to count
-    let metadata = await db.doc("metadata").get()
+    let metadata = await allRef.doc("metadata").get()
     if (!metadata.exists) {
       console.log("Metadata no existeeee")
-      await db.doc("metadata").set({
+      await allRef.doc("metadata").set({
         numberOfDocs: 1
       })
     } else {
       console.log("entro a crear")
-      await db.doc("metadata").update({
+      await allRef.doc("metadata").update({
         numberOfDocs: metadata.data().numberOfDocs + 1
       })
       console.log("nicee")
@@ -56,14 +59,14 @@ exports.train = functions.firestore.document('Data/{docId}').onWrite(async (even
     // Deleting document : subtract one from count
     console.log("deletinggg")
     db.doc("metadata").get().then(snap => {
-      db.doc("metadata").update({
-        numberOfDocs: snap.data().numberOfDocs - 1
-      });
-      return;
-    })
-    .catch((err)=>{
-      console.log(err)
-    })
+        db.doc("metadata").update({
+          numberOfDocs: snap.data().numberOfDocs - 1
+        });
+        return;
+      })
+      .catch((err) => {
+        console.log(err)
+      })
   }
   // const newValue = event.after.data();
 
@@ -85,6 +88,38 @@ exports.myFunctionName = functions.firestore
     const name = newValue.name;
 
   });
+
+exports.test = functions.https.onRequest(async (request, response) => {
+  console.log("fiemfioewnfweiowmflekokfoekfoewkfwepfmpwm")
+  console.log(request)
+  response.send("OKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK")
+})
+
+exports.predictMultiple = functions.https.onRequest(async (request, response) => {
+  const app2 = new App("https://storage.googleapis.com/tactiledmodel/model")
+  if (request.body.data) {
+    let images = request.body.data;
+
+    await data.loadImagesFromDisk(images);
+
+    console.time("Loading Model");
+    await model.init();
+    console.timeEnd("Loading Model");
+
+    let result = await app2.predictModel();
+
+    response.json({
+      code: 200,
+      data: result
+    })
+  } else {
+    response.json({
+      code: 105,
+      data: "Debe ingresar imagenes"
+    })
+  }
+
+})
 
 // const loadFrozenModel = async () => {
 //   model = await tf.loadFrozenModel(
@@ -149,9 +184,3 @@ exports.myFunctionName = functions.firestore
 //   response.send(prediction)
 
 // })
-
-exports.test = functions.https.onRequest(async (request, response) => {
-  console.log("fiemfioewnfweiowmflekokfoekfoewkfwepfmpwm")
-  console.log(request)
-  response.send("OKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK")
-})

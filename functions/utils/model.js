@@ -3,6 +3,8 @@ const fse = require("fs-extra");
 const path = require("path");
 const fs = require("fs");
 const os = require('os');
+global.fetch = require("node-fetch");
+
 
 const firebase = require("../firebaseStorage");
 var bucket = firebase.storage().bucket("tactiledmodel");
@@ -90,7 +92,7 @@ class Model {
     if (x.shape[1] === 224) {
       embeddings = this.decapitatedMobilenet.predict(x);
     }
-
+    console.log(embeddings)
     let {
       values,
       indices
@@ -102,11 +104,31 @@ class Model {
   }
 
   async loadModel(projectName) {
-    const dir = this.getModelPath(projectName);
-    this.model = await tf.loadModel("file://" + dir + "/model.json");
-    this.labels = await fse
-      .readJson(path.join(dir, "labels.json"))
+    let dirName
+    let modelDir;
+    if(projectName.includes("https:")){
+      dirName = projectName;
+      modelDir = projectName + "/model.json";
+    }
+    else{
+      dirName = this.getModelPath(projectName);
+      modelDir = "file://" + dir + "/model.json"
+
+    }
+    console.log("loading own model: " + dirName);
+    this.model = await tf.loadModel(modelDir);
+    if(projectName.includes("https:")){
+      let jsonName = dirName + "/labels.json";
+      let jsonRes = await fetch(jsonName)
+      let json = await jsonRes.json();
+      this.labels = await json.Labels;
+
+    }
+    else{
+      this.labels = await fse
+      .readJson(path.join(dirName, "labels.json"))
       .then(obj => obj.Labels);
+    }
   }
 
   async saveModel(projectName) {
@@ -209,5 +231,4 @@ class Model {
     });
   }
 }
-
-module.exports = new Model("./trained_models/");
+module.exports = new Model(path.join(os.tmpdir(),"trained_models"));

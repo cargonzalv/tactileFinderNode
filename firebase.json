@@ -19,6 +19,9 @@
         "source": "/api/classifyMN", "function": "classifyMN"
       },
       {
+        "source": "/api/convert", "function": "convertToBase64"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
