@@ -77,23 +77,6 @@ exports.train = functions.firestore.document('Data/{docId}').onWrite(async (even
   // initTraining(positives, negatives)
 });
 
-// Listen for any change on document `marie` in collection `users`
-exports.myFunctionName = functions.firestore
-  .document('users/marie').onWrite((snap, context) => {
-    // Get an object representing the document
-    // e.g. {'name': 'Marie', 'age': 66}
-    const newValue = snap.data();
-
-    // access a particular field as you would any JS property
-    const name = newValue.name;
-
-  });
-
-exports.test = functions.https.onRequest(async (request, response) => {
-  console.log("fiemfioewnfweiowmflekokfoekfoewkfwepfmpwm")
-  console.log(request)
-  response.send("OKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK")
-})
 
 exports.predictMultiple = functions.https.onRequest(async (request, response) => {
   const app2 = new App("https://storage.googleapis.com/tactiledmodel/model")

@@ -13,10 +13,7 @@
     ],
     "rewrites": [
       {
-        "source": "/api/classify", "function": "classify"
-      },
-      {
-        "source": "/api/classifyMN", "function": "classifyMN"
+        "source": "/api/predictMultiple", "function": "predictMultiple"
       },
       {
         "source": "/api/convert", "function": "convertToBase64"
