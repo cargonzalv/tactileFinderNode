@@ -5,12 +5,11 @@ const data = require("./utils/data");
 const App = require("./utils/app");
 const path = require("path");
 const functions = require('firebase-functions');
-const cors = require('cors')({
-  origin: true
-});
-const req = require("request");
+
+if (!process.env.predictMultiple ){
 const firestore = require("./firebase").firestore();
 const allRef = firestore.collection("All");
+}
 
 let imageDir = "./tactile_photos";
 let projectName = path.basename(path.dirname(imageDir));
@@ -49,9 +48,13 @@ exports.train = functions.firestore.document('Data/{docId}').onWrite(async (even
       })
     } else {
       console.log("entro a crear")
+      let newNumber = metadata.data().numberOfDocs + 1;
       await allRef.doc("metadata").update({
-        numberOfDocs: metadata.data().numberOfDocs + 1
+        numberOfDocs: newNumber
       })
+      if(newNumber % 20 === 0){
+        console.log("retrain")
+      }
       console.log("nicee")
     }
 
@@ -83,14 +86,13 @@ exports.predictMultiple = functions.https.onRequest(async (request, response) =>
   if (request.body.data) {
     let images = request.body.data;
 
-    await data.loadImagesFromDisk(images);
+    data.loadImagesFromBuffers(images);
 
     console.time("Loading Model");
-    await model.init();
+    await model.init("https://storage.googleapis.com/tactiledmodel/model");
     console.timeEnd("Loading Model");
 
     let result = await app2.predictModel();
-
     response.json({
       code: 200,
       data: result

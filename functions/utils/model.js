@@ -5,9 +5,11 @@ const fs = require("fs");
 const os = require('os');
 global.fetch = require("node-fetch");
 
+if (!process.env.predictMultiple ){
 
 const firebase = require("../firebaseStorage");
 var bucket = firebase.storage().bucket("tactiledmodel");
+}
 
 // Loads mobilenet and returns a model that returns the internal activation
 // we'll use as input to our classifier model.
@@ -24,6 +26,10 @@ async function loadDecapitatedMobilenet() {
     outputs: layer.output
   });
 }
+function reflect(promise){
+  return promise.then(function(v){ return {v:v, status: "resolved" }},
+                      function(e){ return {e:e, status: "rejected" }});
+}
 
 class Model {
   constructor(modelsDirectory) {
@@ -33,8 +39,13 @@ class Model {
     this.labels = null;
   }
 
-  async init() {
-    this.decapitatedMobilenet = await loadDecapitatedMobilenet();
+  async init(projectName) {
+    let arr = [ loadDecapitatedMobilenet(), this.loadModel(projectName) ];
+
+    let results = await Promise.all(arr.map(reflect));
+    console.log(results)
+    this.decapitatedMobilenet = results[0].v;
+    this.model = results[1].v;
   }
 
   // Creates a 2-layer fully connected model. By creating a separate model,
@@ -89,14 +100,19 @@ class Model {
     // Assume we are getting the embeddings from the decapitatedMobilenet
     let embeddings = x;
     // If the second dimension is 224, treat it as though it's an image tensor
+    console.log("predictMobilenet")
     if (x.shape[1] === 224) {
       embeddings = this.decapitatedMobilenet.predict(x);
+      console.log("finish mobilenet")
     }
-    console.log(embeddings)
+
+    console.log("begin topk")
     let {
       values,
       indices
     } = this.model.predict(embeddings).topk();
+    console.log("finish topk")
+    console.log("begin datasync");
     return {
       label: this.labels[indices.dataSync()[0]],
       confidence: values.dataSync()[0]
@@ -115,13 +131,12 @@ class Model {
       modelDir = "file://" + dir + "/model.json"
 
     }
-    console.log("loading own model: " + dirName);
-    this.model = await tf.loadModel(modelDir);
+    
     if(projectName.includes("https:")){
       let jsonName = dirName + "/labels.json";
       let jsonRes = await fetch(jsonName)
       let json = await jsonRes.json();
-      this.labels = await json.Labels;
+      this.labels = json.Labels;
 
     }
     else{
@@ -129,6 +144,8 @@ class Model {
       .readJson(path.join(dirName, "labels.json"))
       .then(obj => obj.Labels);
     }
+    this.model = await tf.loadModel(modelDir);
+    return this.model;
   }
 
   async saveModel(projectName) {

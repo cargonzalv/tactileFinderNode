@@ -1,24 +1,20 @@
 const tf = require("@tensorflow/tfjs");
 const fg = require("fast-glob");
 const fse = require("fs-extra");
-const jpeg = require("jpeg-js");
 const path = require("path");
-const os = require('os');
-var http = require('http');
-var https = require("https")
-
+const request = require('request').defaults({
+  encoding: null
+});
 
 const IMAGE_CHANNELS = 3;
 
-function fileToTensor(filename) {
-  try {
-    const img = jpeg.decode(fse.readFileSync(filename), true);
-    return imageToTensor(img, IMAGE_CHANNELS);
-
-  } catch (err) {
-    console.log(err)
-    return null
-  }
+function base64ToSensor(data) {
+    let image = {
+      width: 224,
+      height: 224,
+      data: new Uint8Array(new Buffer(data, "base64"))
+    }
+    return imageToTensor(image, IMAGE_CHANNELS);
 }
 
 async function getDirectories(imagesDirectory) {
@@ -70,39 +66,39 @@ async function readImagesDirectory(imagesDirectory) {
 
   return result;
 }
-const downloadFromURL = function(url, dest, cb) {
-  let protocol = url.includes("https") ? https : http;
-  var file = fse.createWriteStream(dest);
-  var request = protocol.get(url, function(response) {
-    response.pipe(file);
-    file.on('finish', function() {
-      file.close(cb);  // close() is async, call cb after close completes.
-    });
-  }).on('error', function(err) { // Handle errors
-    fse.unlink(dest); // Delete the file async. (But we don't check the result)
-    console.log(err)
-  });
-};
+// const downloadFromURL = function(url, dest, cb) {
+//   let protocol = url.includes("https") ? https : http;
+//   var file = fse.createWriteStream(dest);
+//   var request = protocol.get(url, function(response) {
+//     response.pipe(file);
+//     file.on('finish', function() {
+//       file.close(cb);  // close() is async, call cb after close completes.
+//     });
+//   }).on('error', function(err) { // Handle errors
+//     fse.unlink(dest); // Delete the file async. (But we don't check the result)
+//     console.log(err)
+//   });
+// };
 
-async function downloadImages(base64Images) {
+// async function downloadImages(base64Images) {
 
-  console.log(base64Images)
-  const dataDir = path.join(os.tmpdir(), "data");
-  base64Images.map((image, i) => {
-    const tempFilePath = path.join(dataDir, "image" + i + ".jpg");
-    fse.ensureDirSync(dataDir);
-    return downloadFromURL(image, tempFilePath, ()=>{
-      return tempFilePath;
-    })
-  })
-  return await getImagesInDirectory(dataDir).then(images => {
-    return {
-      label: "",
-      images: images
-    };
-  });
+//   console.log(base64Images)
+//   const dataDir = path.join(os.tmpdir(), "data");
+//   base64Images.map((image, i) => {
+//     const tempFilePath = path.join(dataDir, "image" + i + ".jpg");
+//     fse.ensureDirSync(dataDir);
+//     return downloadFromURL(image, tempFilePath, ()=>{
+//       return tempFilePath;
+//     })
+//   })
+//   return await getImagesInDirectory(dataDir).then(images => {
+//     return {
+//       label: "",
+//       images: images
+//     };
+//   });
 
-}
+// }
 class Data {
   constructor() {
     this.dataset = null;
@@ -112,9 +108,8 @@ class Data {
   getEmbeddingsForImage(index) {
     return this.dataset.images.gather([index]);
   }
-
-  fileToTensor(filename) {
-    return fileToTensor(filename);
+  bufferToTensor(buffer) {
+    return base64ToSensor(buffer);
   }
 
   imageToTensor(image, numChannels) {
@@ -129,8 +124,8 @@ class Data {
     this.labelsAndImages = await readImagesDirectory(imagesDirectory);
   }
 
-  async loadImagesFromDisk(imagesBase64) {
-    this.labelsAndImages = await downloadImages(imagesBase64);
+  loadImagesFromBuffers(urlImages) {
+    this.labelsAndImages = urlImages;
   }
 
   async loadTrainingData(model) {
@@ -151,13 +146,11 @@ class Data {
     // Loop through the files and populate the 'images' and 'labels' arrays
     let embeddingsOffset = 0;
     let labelsOffset = 0;
-    console.log("Loading Training Data");
-    console.time("Loading Training Data");
     await this.labelsAndImages.forEach(element => {
       let labelIndex = this.labelIndex(element.label);
       element.images.forEach(image => {
         tf.tidy(() => {
-          let t = fileToTensor(image);
+          let t = urlToTensor(image);
           if (t === null) {
             return;
           }

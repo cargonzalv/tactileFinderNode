@@ -11,8 +11,6 @@ class App {
         this.projectName = projName;
     }
   async testModel() {
-    console.log("Testing Model");
-    await model.loadModel(this.projectName);
     if (model.model) {
       console.time("Testing Predictions");
       console.log(model.model.summary());
@@ -27,8 +25,8 @@ class App {
           tf.tidy(() => {
             let embeddings = data.dataset ?
               data.getEmbeddingsForImage(imageIndex++) :
-              data.fileToTensor(img_filename);
-
+              data.bufferToTensor(img_filename);
+            console.log(embeddings)
             let prediction = model.getPrediction(embeddings);
             results.push({
               class: prediction.label,
@@ -64,30 +62,35 @@ class App {
     }
   }
 
-  async predictModel() {
-    console.log("Testing Model");
-    await model.loadModel(this.projectName);
+  predictModel() {
     if (model.model) {
-      console.time("Testing Predictions");
-      let results = [];
-      data.labelsAndImages.images.forEach(img_filename => {
-          tf.tidy(() => {
+      console.log("Testing Predictions");
+      let imageIndex = 0;
+      return data.labelsAndImages.map(imgUrl => {
+          return tf.tidy(() => {
+            console.log("starting getting embeddings")
             let embeddings = data.dataset ?
               data.getEmbeddingsForImage(imageIndex++) :
-              data.fileToTensor(img_filename);
+              data.bufferToTensor(imgUrl);
+              console.log("finish getting embeddings")
+
             if(embeddings === null){
-              return;
+              return {
+                url: imgUrl,
+                probability:0.00
+              }
             }
+            console.log("starting predictionsss")
             let prediction = model.getPrediction(embeddings);
-            let probability = (Number(prediction.confidence) * 10).toFixed(1);
+            console.log("finished predictions")
+            let probability = (Number(prediction.confidence) * 10).toFixed(2);
             probability = prediction.label === "Positive" ? probability : 100 - probability;
-            results.push({
-              class: "Positive",
-              probability: probability
-            });
+            return{
+                url: imgUrl,
+                probability:probability
+            }
         });
       });
-      return results
       
     }
     else{
@@ -98,7 +101,6 @@ class App {
 
   async trainModel() {
     await data.loadTrainingData(model.decapitatedMobilenet);
-    console.log("Loaded Training Data");
 
     if (data.dataset.images) {
       const trainingParams = {

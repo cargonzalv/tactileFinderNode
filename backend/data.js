@@ -6,19 +6,6 @@ const path = require("path");
 
 const IMAGE_CHANNELS = 3;
 
-function fileToTensor(filename) {
-    console.log(filename)
-    try{
-        const img = jpeg.decode(fse.readFileSync(filename), true);
-        return imageToTensor(img, IMAGE_CHANNELS);
-
-    }
-    catch(err){
-        console.log("SOI Error")
-        return null
-    }
-}
-
 async function getDirectories(imagesDirectory) {
     return await fse.readdir(imagesDirectory);
 }
@@ -69,16 +56,27 @@ class Data {
     constructor() {
         this.dataset = null;
         this.labelsAndImages = null;
+        this.errors = 0;
     }
 
     getEmbeddingsForImage(index) {
         return this.dataset.images.gather([index]);
     }
+    
 
     fileToTensor(filename) {
-        return fileToTensor(filename);
+        try{
+            const img = jpeg.decode(fse.readFileSync(filename), true);
+            return imageToTensor(img, IMAGE_CHANNELS);
+    
+        }
+        catch(err){
+            console.log("SOI Error")
+            this.errors++;
+            console.log(this.errors)
+            return null
+        }
     }
-
     imageToTensor(image, numChannels) {
         return imageToTensor(image, numChannels);
     }
@@ -109,13 +107,11 @@ class Data {
         // Loop through the files and populate the 'images' and 'labels' arrays
         let embeddingsOffset = 0;
         let labelsOffset = 0;
-        console.log("Loading Training Data");
-        console.time("Loading Training Data");
         await this.labelsAndImages.forEach(element => {
             let labelIndex = this.labelIndex(element.label);
             element.images.forEach(image => {
                 tf.tidy(() => {
-                    let t = fileToTensor(image);
+                    let t = this.fileToTensor(image);
                     if(t == null){
                         return;
                     }
@@ -127,7 +123,6 @@ class Data {
                 embeddingsOffset += embeddingsFlatSize;
                 labelsOffset += 1;
             });
-            console.log("Loading Training Data", { label: element.label });
         });
 
         this.dataset = {
