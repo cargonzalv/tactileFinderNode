@@ -1,7 +1,9 @@
 const tf = require("@tensorflow/tfjs");
-const fg = require("fast-glob");
+require("@tensorflow/tfjs-node");
 const fse = require("fs-extra");
 const path = require("path");
+const jpeg = require('jpeg-js');
+var Jimp = require('jimp');
 const request = require('request').defaults({
   encoding: null
 });
@@ -9,20 +11,27 @@ const request = require('request').defaults({
 const IMAGE_CHANNELS = 3;
 
 function base64ToSensor(data) {
-    let image = {
-      width: 224,
-      height: 224,
-      data: new Uint8Array(new Buffer(data, "base64"))
+  let buffer;
+  if(data.includes("http")){
+    let image = await Jimp.read(data);
+  
+    buffer = await image.getBufferAsync(Jimp.MIME_JPEG);
+  }
+  else{
+    buffer = new Buffer(data, "base64")
+  }
+  try{
+    const pixels = jpeg.decode(buffer, true);
+    return imageToTensor(pixels, IMAGE_CHANNELS);
     }
-    return imageToTensor(image, IMAGE_CHANNELS);
+    catch (err) {
+      console.log("SOI Error")
+      return null
+    }
 }
 
 async function getDirectories(imagesDirectory) {
   return await fse.readdir(imagesDirectory);
-}
-
-async function getImagesInDirectory(directory) {
-  return await fg(path.join(directory, "*.jpg"));
 }
 
 const imageByteArray = (image, numChannels) => {
@@ -49,56 +58,6 @@ const imageToTensor = (image, numChannels) => {
     .div(tf.scalar(127))
     .sub(tf.scalar(1));
 };
-
-async function readImagesDirectory(imagesDirectory) {
-  const directories = await getDirectories(imagesDirectory);
-  const result = await Promise.all(
-    directories.map(async directory => {
-      const p = path.join(imagesDirectory, directory);
-      return getImagesInDirectory(p).then(images => {
-        return {
-          label: directory,
-          images: images
-        };
-      });
-    })
-  );
-
-  return result;
-}
-// const downloadFromURL = function(url, dest, cb) {
-//   let protocol = url.includes("https") ? https : http;
-//   var file = fse.createWriteStream(dest);
-//   var request = protocol.get(url, function(response) {
-//     response.pipe(file);
-//     file.on('finish', function() {
-//       file.close(cb);  // close() is async, call cb after close completes.
-//     });
-//   }).on('error', function(err) { // Handle errors
-//     fse.unlink(dest); // Delete the file async. (But we don't check the result)
-//     console.log(err)
-//   });
-// };
-
-// async function downloadImages(base64Images) {
-
-//   console.log(base64Images)
-//   const dataDir = path.join(os.tmpdir(), "data");
-//   base64Images.map((image, i) => {
-//     const tempFilePath = path.join(dataDir, "image" + i + ".jpg");
-//     fse.ensureDirSync(dataDir);
-//     return downloadFromURL(image, tempFilePath, ()=>{
-//       return tempFilePath;
-//     })
-//   })
-//   return await getImagesInDirectory(dataDir).then(images => {
-//     return {
-//       label: "",
-//       images: images
-//     };
-//   });
-
-// }
 class Data {
   constructor() {
     this.dataset = null;
@@ -119,11 +78,6 @@ class Data {
   labelIndex(label) {
     return this.labelsAndImages.findIndex(item => item.label === label);
   }
-
-  async loadLabelsAndImages(imagesDirectory) {
-    this.labelsAndImages = await readImagesDirectory(imagesDirectory);
-  }
-
   loadImagesFromBuffers(urlImages) {
     this.labelsAndImages = urlImages;
   }

@@ -66,14 +66,13 @@ class App {
     if (model.model) {
       console.log("Testing Predictions");
       let imageIndex = 0;
-      return data.labelsAndImages.map(imgUrl => {
-          return tf.tidy(() => {
+      return Promise.all(data.labelsAndImages.map(async imgUrl => {
             console.log("starting getting embeddings")
             let embeddings = data.dataset ?
               data.getEmbeddingsForImage(imageIndex++) :
-              data.bufferToTensor(imgUrl);
+              await data.bufferToTensor(imgUrl);
               console.log("finish getting embeddings")
-
+              console.log(embeddings)
             if(embeddings === null){
               return {
                 url: imgUrl,
@@ -83,14 +82,15 @@ class App {
             console.log("starting predictionsss")
             let prediction = model.getPrediction(embeddings);
             console.log("finished predictions")
-            let probability = (Number(prediction.confidence) * 10).toFixed(2);
+            let probability = (Number(prediction.confidence) * 100).toFixed(2);
             probability = prediction.label === "Positive" ? probability : 100 - probability;
+            // free memory from TF-internal libraries from input image
+            embeddings.dispose()
             return{
                 url: imgUrl,
                 probability:probability
             }
-        });
-      });
+      }));
       
     }
     else{

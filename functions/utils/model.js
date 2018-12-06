@@ -1,14 +1,15 @@
 const tf = require("@tensorflow/tfjs");
+require("@tensorflow/tfjs-node");
 const fse = require("fs-extra");
 const path = require("path");
 const fs = require("fs");
 const os = require('os');
 global.fetch = require("node-fetch");
 
-if (!process.env.predictMultiple ){
+if (!process.env.predictMultiple) {
 
-const firebase = require("../firebaseStorage");
-var bucket = firebase.storage().bucket("tactiledmodel");
+  const firebase = require("../firebaseStorage");
+  var bucket = firebase.storage().bucket("tactiledmodel");
 }
 
 // Loads mobilenet and returns a model that returns the internal activation
@@ -26,9 +27,20 @@ async function loadDecapitatedMobilenet() {
     outputs: layer.output
   });
 }
-function reflect(promise){
-  return promise.then(function(v){ return {v:v, status: "resolved" }},
-                      function(e){ return {e:e, status: "rejected" }});
+
+function reflect(promise) {
+  return promise.then(function(v) {
+      return {
+        v: v,
+        status: "resolved"
+      }
+    },
+    function(e) {
+      return {
+        e: e,
+        status: "rejected"
+      }
+    });
 }
 
 class Model {
@@ -40,12 +52,20 @@ class Model {
   }
 
   async init(projectName) {
-    let arr = [ loadDecapitatedMobilenet(), this.loadModel(projectName) ];
+    if (this.decapitatedMobilenet === null && this.model === null) {
+      let arr = [loadDecapitatedMobilenet(), this.loadModel(projectName)];
 
-    let results = await Promise.all(arr.map(reflect));
-    console.log(results)
-    this.decapitatedMobilenet = results[0].v;
-    this.model = results[1].v;
+      let results = await Promise.all(arr.map(reflect));
+      console.log(results)
+      this.decapitatedMobilenet = results[0].v;
+      this.model = results[1].v;
+    }
+    else if (this.model === null) {
+      this.model = await this.loadModel(projectName)
+    }
+    else if(this.decapitatedMobilenet === null){
+      this.decapitatedMobilenet = await loadDecapitatedMobilenet()
+    }
   }
 
   // Creates a 2-layer fully connected model. By creating a separate model,
@@ -122,27 +142,25 @@ class Model {
   async loadModel(projectName) {
     let dirName
     let modelDir;
-    if(projectName.includes("https:")){
+    if (projectName.includes("https:")) {
       dirName = projectName;
       modelDir = projectName + "/model.json";
-    }
-    else{
+    } else {
       dirName = this.getModelPath(projectName);
       modelDir = "file://" + dir + "/model.json"
 
     }
-    
-    if(projectName.includes("https:")){
+
+    if (projectName.includes("https:")) {
       let jsonName = dirName + "/labels.json";
       let jsonRes = await fetch(jsonName)
       let json = await jsonRes.json();
       this.labels = json.Labels;
 
-    }
-    else{
+    } else {
       this.labels = await fse
-      .readJson(path.join(dirName, "labels.json"))
-      .then(obj => obj.Labels);
+        .readJson(path.join(dirName, "labels.json"))
+        .then(obj => obj.Labels);
     }
     this.model = await tf.loadModel(modelDir);
     return this.model;
@@ -157,7 +175,8 @@ class Model {
       let weights = new Buffer(rawData.weightData);
       await this.uploadFile("weights.bin", weights)
       console.log('Uploaded weights bin!');
-      let modelJson = { ...rawData };
+      let modelJson = { ...rawData
+      };
       modelJson.weightsManifest = {
         paths: ["weights.bin"],
         weights: rawData.weightSpecs
@@ -248,4 +267,4 @@ class Model {
     });
   }
 }
-module.exports = new Model(path.join(os.tmpdir(),"trained_models"));
+module.exports = new Model(path.join(os.tmpdir(), "trained_models"));

@@ -65,6 +65,7 @@ class Data {
     
 
     fileToTensor(filename) {
+        console.log(filename)
         try{
             const img = jpeg.decode(fse.readFileSync(filename), true);
             return imageToTensor(img, IMAGE_CHANNELS);

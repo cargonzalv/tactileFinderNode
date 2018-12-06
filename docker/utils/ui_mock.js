@@ -1,6 +1,6 @@
 //@ts-check
 const getDenseUnits = () => {
-    return 50; //reduce file size, but reduces accuracy
+    return 200;
 };
 
 const getLearningRate = () => {
@@ -14,7 +14,7 @@ const getBatchSizeFraction = () => {
 };
 
 const getEpochs = () => {
-    return 100;
+    return 10;
 };
 
 const trainStatus = status => {
