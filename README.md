@@ -12,7 +12,7 @@ Tactiled is a tool made to test the quality of an image to be used as a tactile 
 
 ## Client Folder
 
-Contains the source code for the client side of Tactiled. Here's that [repo](https://github.com/cegonzalv/tactileFinderClient)
+Contains the source code for the client side of Tactiled, made on ReactJS. Here's that [repo](https://github.com/cegonzalv/tactileFinderClient)
 
 ## Docker folder
 
