@@ -3,14 +3,14 @@ require("@tensorflow/tfjs-node");
 const fse = require("fs-extra");
 const path = require("path");
 const jpeg = require('jpeg-js');
-var Jimp = require('jimp');
+const Jimp = require('jimp');
 const request = require('request').defaults({
   encoding: null
 });
 
 const IMAGE_CHANNELS = 3;
 
-function base64ToSensor(data) {
+async function base64ToSensor(data) {
   let buffer;
   if(data.includes("http")){
     let image = await Jimp.read(data);
@@ -67,8 +67,8 @@ class Data {
   getEmbeddingsForImage(index) {
     return this.dataset.images.gather([index]);
   }
-  bufferToTensor(buffer) {
-    return base64ToSensor(buffer);
+  async bufferToTensor(buffer) {
+    return await base64ToSensor(buffer);
   }
 
   imageToTensor(image, numChannels) {

@@ -7,13 +7,18 @@ const IMAGE_CHANNELS = 3;
 
 async function base64ToSensor(data) {
   let buffer;
+  console.log("URLLLLLLLLLLLLLLLLLLLLLLL: " + data)
   if(data.includes("http")){
     let image = await Jimp.read(data);
   
     buffer = await image.getBufferAsync(Jimp.MIME_JPEG);
   }
   else{
+    console.log("ENTRO BUFFER")
     buffer = new Buffer(data, "base64")
+    let image = await Jimp.read(buffer);
+  
+    buffer = await image.getBufferAsync(Jimp.MIME_JPEG);
   }
   try{
     const pixels = jpeg.decode(buffer, true);
