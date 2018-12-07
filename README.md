@@ -1,6 +1,6 @@
 # Project description
 
-Tactiled is a tool made to test the quality of an image to be used as a tactile graphic. We want to develop and train a Machine Learning model that determines the quality of an image that will be transformed to a tactile graphic, by evaluating the facility for a blind person to understand its content
+[Tactiled](https://tactiled.firebaseapp.com/) is a tool made to test the quality of an image to be used as a tactile graphic. We want to develop and train a Machine Learning model that determines the quality of an image that will be transformed to a tactile graphic, by evaluating the facility for a blind person to understand its content
 
 # Functionalities
 1. A Machine Learning model capable of determining the quality of an image, quality understood as the facility for a blind person to understand its content, of a tactile graphic. 
