@@ -2,6 +2,10 @@ const tf = require("@tensorflow/tfjs");
 require("@tensorflow/tfjs-node");
 global.fetch = require("node-fetch");
 
+let decapitatedMobilenet;
+let model;
+let labels;
+
 // Loads mobilenet and returns a model that returns the internal activation
 // we'll use as input to our classifier model.
 async function loadDecapitatedMobilenet() {
@@ -35,26 +39,37 @@ function reflect(promise) {
 
 class Model {
   constructor() {
-    this.decapitatedMobilenet = null;
-    this.model = null;
-    this.labels = null;
   }
 
   async init(projectName) {
-    if (this.decapitatedMobilenet === null && this.model === null) {
-      let arr = [loadDecapitatedMobilenet(), this.loadModel(projectName)];
+    if (!decapitatedMobilenet && !model) {
+      //two equals, not three. This checks for undefined + null
+      let arr = [loadDecapitatedMobilenet(), this.loadModel(projectName)]; 
 
       let results = await Promise.all(arr.map(reflect));
-      this.decapitatedMobilenet = results[0].v;
-      this.model = results[1].v;
+      decapitatedMobilenet = results[0].v;
+      model = results[1].v;
+      console.log("loading both")
+      return results;
     } 
-    else if(this.model === null) {
-      this.model = await this.loadModel(projectName)    
+    else if(!model) {
+      model = await this.loadModel(projectName)    
+      console.log("using cached mobilenet")
+      return model;
     }
-    else if(this.decapitatedMobilenet === null) {
-      this.decapitatedMobilenet = await loadDecapitatedMobilenet(projectName)    
+    else if(!decapitatedMobilenet) {
+      decapitatedMobilenet = await loadDecapitatedMobilenet(projectName)    
+      console.log("using cached model")
+      return decapitatedMobilenet;
     }
-    
+    else{
+      console.log("all cached")
+      return true;
+    }
+  }
+
+  getModel(){
+    return model;
   }
 
   getPrediction(x) {
@@ -62,15 +77,15 @@ class Model {
     let embeddings = x;
     // If the second dimension is 224, treat it as though it's an image tensor
     if (x.shape[1] === 224) {
-      embeddings = this.decapitatedMobilenet.predict(x);
+      embeddings = decapitatedMobilenet.predict(x);
     }
 
     let {
       values,
       indices
-    } = this.model.predict(embeddings).topk();
+    } = model.predict(embeddings).topk();
     return {
-      label: this.labels[indices.dataSync()[0]],
+      label: labels[indices.dataSync()[0]],
       confidence: values.dataSync()[0]
     };
   }
@@ -83,10 +98,9 @@ class Model {
     let jsonName = dirName + "/labels.json";
     let jsonRes = await fetch(jsonName)
     let json = await jsonRes.json();
-    this.labels = json.Labels;
+    labels = json.Labels;
 
-    this.model = await tf.loadModel(modelDir);
-    return this.model;
+    return await tf.loadModel(modelDir);
   }
 }
 module.exports = new Model();

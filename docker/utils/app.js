@@ -12,7 +12,7 @@ class App {
   }
 
   predictModel() {
-    if (model.model) {
+    if (model.getModel()) {
       let imageIndex = 0;
       return Promise.all(data.labelsAndImages.map(async imgUrl => {
         let embeddings = data.dataset ?
